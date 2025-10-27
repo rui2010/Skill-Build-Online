@@ -15,6 +15,7 @@ canvas{display:block;width:100%;height:100%}
 /* モーダル */
 .modal{position:fixed;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:60}
 .modal-content{background:#1b1b1b;padding:20px;border-radius:8px;border:1px solid #333;width:320px;text-align:center}
+.modal-content.cinematic{width:640px;max-width:90%;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
 .job-list{display:flex;gap:8px;justify-content:center;margin-top:12px}
 .job-btn{padding:8px 12px;border-radius:6px;background:#2b2b2b;border:1px solid #444;color:#fff;cursor:pointer}
 .secondary{margin-top:12px;padding:6px 10px;background:#333;border:1px solid #444;color:#ddd;cursor:pointer}
@@ -30,3 +31,22 @@ canvas{display:block;width:100%;height:100%}
 	box-shadow:0 2px 6px rgba(0,0,0,0.4);
 }
 .npc-speech.hidden{display:none;}
+.cinema-text{color:#fff;font-size:18px;line-height:1.5;min-height:72px;max-height:240px;overflow:hidden;padding:6px;background:transparent;border-radius:4px;text-align:center}
+
+/* タイプライター用カーソル（擬似） */
+.cinema-text::after{
+	content:'|';
+	margin-left:6px;
+	opacity:0.9;
+	animation: blink 1s steps(1) infinite;
+}
+@keyframes blink{50%{opacity:0}}
+
+/* フェードイン/out の補助クラス */
+.fade-in{animation: fadeIn 0.6s ease forwards}
+.fade-out{animation: fadeOut 0.5s ease forwards}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes fadeOut{from{opacity:1}to{opacity:0;transform:translateY(-6px)}}
+
+/* 開場ボタン等の配置調整 */
+#opening-next{padding:8px 12px}

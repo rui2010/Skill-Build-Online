@@ -39,7 +39,7 @@ for(let i=-3;i<=3;i++){
 
 // プレイヤー（簡易ボックス）と TPS カメラ追従
 const playerMesh = new THREE.Mesh(new THREE.BoxGeometry(0.8,1.8,0.6), new THREE.MeshStandardMaterial({color:0x1565c0}));
-playerMesh.position.set(0,0.9,0); scene.add(playerMesh;
+playerMesh.position.set(0,0.9,0); scene.add(playerMesh);
 
 // プレイヤーデータ
 const player = {
@@ -49,11 +49,11 @@ const player = {
 	weapon: null
 };
 
-// 初期スキルテンプレ
+// 初期スキルテンプレを新ジョブに更新
 const skillTemplates = {
-	sniper: [{name:'スナイプ', baseCost:8, basePower:30, costExponent:1.9, powerDiminish:0.55}],
-	warrior: [{name:'ぶんしん', baseCost:6, basePower:20, costExponent:1.6, powerDiminish:0.6}],
-	mage: [{name:'ファイア', baseCost:7, basePower:22, costExponent:1.7, powerDiminish:0.6}],
+	dual: [{name:'旋風双刃', baseCost:7, basePower:24, costExponent:1.7, powerDiminish:0.58}],      // 双剣士
+	firework: [{name:'爆花術', baseCost:6, basePower:20, costExponent:1.6, powerDiminish:0.62}],    // 花火師
+	hunter: [{name:'狙撃術', baseCost:8, basePower:28, costExponent:1.85, powerDiminish:0.56}],     // 狩人
 };
 
 // HUD 更新
@@ -203,13 +203,20 @@ function runCommand(line){
 	}
 }
 
-// 職業適用（初期スキル・武器）
+// 職業適用（初期スキル・武器） — 既存関数を流用して weapon 名などを設定
 function applyJob(jobKey){
 	const defs = skillTemplates[jobKey] || [];
 	player.skills = defs.map(d=> new Skill(d));
-	// 簡易武器
-	player.weapon = jobKey === 'sniper' ? 'スナイパーライフル' : jobKey === 'warrior' ? '大剣' : '魔導杖';
-	player.sp += 0;
+	// 武器設定（日本語表示）
+	if(jobKey === 'dual'){
+		player.weapon = '双剣';
+	} else if(jobKey === 'firework'){
+		player.weapon = '花火筒';
+	} else if(jobKey === 'hunter'){
+		player.weapon = '長弓';
+	} else {
+		player.weapon = null;
+	}
 	localStorage.setItem('hasChosenJob','1');
 	updateHUD();
 }
@@ -217,14 +224,83 @@ function applyJob(jobKey){
 // 初回職業選択モーダル制御
 const jobModal = document.getElementById('job-modal');
 const jobBtns = document.querySelectorAll('.job-btn');
-const jobClose = document.getElementById('job-close');
-if(!localStorage.getItem('hasChosenJob')){
-	jobModal.classList.remove('hidden');
-}
+
+// 次へを押すとオープニングを閉じて職業選択を表示
 jobBtns.forEach(b=>{
-	b.addEventListener('click', ()=>{ const j = b.dataset.job; applyJob(j); jobModal.classList.add('hidden'); });
+	b.addEventListener('click', ()=>{ 
+		const j = b.dataset.job; 
+		applyJob(j); 
+		jobModal.classList.add('hidden'); 
+	});
 });
-jobClose.addEventListener('click', ()=>{ jobModal.classList.add('hidden'); localStorage.setItem('hasChosenJob','1'); });
+
+// --- オープニング用：タイプライター・ページ送りの実装 ---
+const openingModal = document.getElementById('opening-modal');
+const openingTextEl = document.getElementById('opening-text');
+const openingNext = document.getElementById('opening-next');
+
+// 簡易 sleep
+function sleep(ms){ return new Promise(res => setTimeout(res, ms)); }
+
+// テキストをタイプライターで表示する。speed(ms/char)。
+// 途中で skipRequested を true にすると即座に完了する。
+let skipRequested = false;
+async function typeText(el, text, speed = 36){
+	el.textContent = '';
+	el.classList.remove('fade-in','fade-out');
+	el.classList.add('fade-in');
+	for(let i=0;i<text.length;i++){
+		if(skipRequested){ el.textContent = text; break; }
+		el.textContent += text[i];
+		await sleep(speed);
+	}
+	// 少し余韻
+	await sleep(300);
+}
+
+// オープニングの複数ページを自動で送り、終了後に職業選択を開く。
+// pages: array of {text, wait} wait は表示維持時間(ms)。
+async function playOpeningSequence(pages = []){
+	openingModal.classList.remove('hidden');
+	skipRequested = false;
+	for(let i=0;i<pages.length;i++){
+		openingTextEl.textContent = '';
+		await typeText(openingTextEl, pages[i].text, 28);
+		// wait: 自動進行までの時間。途中 skip されたら早送り。
+		const waitMs = pages[i].wait || 1800;
+		let elapsed = 0;
+		const step = 100;
+		while(elapsed < waitMs && !skipRequested){
+			await sleep(step);
+			elapsed += step;
+		}
+		if(skipRequested) break;
+	}
+	openingModal.classList.add('hidden');
+	jobModal.classList.remove('hidden');
+	openingTextEl.classList.remove('fade-in');
+	skipRequested = false;
+}
+
+// openingNext ボタンでスキップを通知（次へで即座に職業選択へ）
+openingNext.addEventListener('click', ()=>{
+	skipRequested = true;
+});
+
+// 最初の起動時にオープニングを流す（localStorage チェック）
+if(!localStorage.getItem('hasChosenJob')){
+	// 例として複数ページを準備
+	const pages = [
+		{ text: '西の海岸に近い小さな街、スキルビルドオンラインの町へようこそ。', wait: 2200 },
+		{ text: 'ここでは技術と工夫で自分だけのスキルを作り、戦い、街の評判を上げていきます。', wait: 2400 },
+		{ text: 'まずは職業を選び、最初の武器とスキルを受け取りましょう。', wait: 2000 }
+	];
+	// 再生（非同期）
+	playOpeningSequence(pages).catch(console.error);
+} else {
+	// すでに選択済みなら opening は閉じておく
+	openingModal.classList.add('hidden');
+}
 
 // アニメーションループ
 let last = performance.now();
