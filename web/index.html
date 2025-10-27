@@ -28,6 +28,37 @@
 		</div>
 	</div>
 
+	<!-- キャラメイク（オープニングの次に表示） -->
+	<div id="charmake-modal" class="modal hidden" role="dialog" aria-modal="true">
+		<div class="modal-content">
+			<h2>キャラクターメイク</h2>
+			<div style="text-align:left">
+				<label>身長: <span id="ch-height-val">1.00</span>x</label>
+				<input id="ch-height" type="range" min="0.8" max="1.4" step="0.01" value="1.00" />
+			</div>
+			<div style="margin-top:10px">色を選択:</div>
+			<div class="job-list" style="margin-top:6px;">
+				<button class="ch-color-btn" data-color="#1565c0" style="background:#1565c0;width:36px;height:28px;border-radius:4px;border:1px solid #333;"></button>
+				<button class="ch-color-btn" data-color="#4caf50" style="background:#4caf50;width:36px;height:28px;border-radius:4px;border:1px solid #333;"></button>
+				<button class="ch-color-btn" data-color="#b71c1c" style="background:#b71c1c;width:36px;height:28px;border-radius:4px;border:1px solid #333;"></button>
+				<button class="ch-color-btn" data-color="#ffca28" style="background:#ffca28;width:36px;height:28px;border-radius:4px;border:1px solid #333;"></button>
+			</div>
+			<div id="ch-preview" style="margin-top:12px">プレビュー</div>
+			<button id="ch-next" class="secondary" style="margin-top:10px">次へ</button>
+		</div>
+	</div>
+
+	<!-- 名前決定モーダル -->
+	<div id="name-modal" class="modal hidden" role="dialog" aria-modal="true">
+		<div class="modal-content">
+			<h2>名前を入力してください</h2>
+			<input id="name-input" type="text" placeholder="名前を入力" style="width:80%;padding:8px;margin-top:8px;border-radius:6px;border:1px solid #444;background:#111;color:#fff" />
+			<div style="margin-top:10px">
+				<button id="name-next" class="secondary">決定</button>
+			</div>
+		</div>
+	</div>
+
 	<!-- 初回職業選択モーダル -->
 	<div id="job-modal" class="modal hidden" role="dialog" aria-modal="true">
 		<div class="modal-content">

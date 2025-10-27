@@ -277,9 +277,9 @@ async function playOpeningSequence(pages = []){
 		if(skipRequested) break;
 	}
 	openingModal.classList.add('hidden');
-	jobModal.classList.remove('hidden');
-	openingTextEl.classList.remove('fade-in');
-	skipRequested = false;
+	// 次はキャラメイク → 名前 → 職業の順
+	charModal.classList.remove('hidden');
+	updateCharPreview();
 }
 
 // openingNext ボタンでスキップを通知（次へで即座に職業選択へ）
@@ -287,20 +287,65 @@ openingNext.addEventListener('click', ()=>{
 	skipRequested = true;
 });
 
-// 最初の起動時にオープニングを流す（localStorage チェック）
-if(!localStorage.getItem('hasChosenJob')){
-	// 例として複数ページを準備
-	const pages = [
-		{ text: '西の海岸に近い小さな街、スキルビルドオンラインの町へようこそ。', wait: 2200 },
-		{ text: 'ここでは技術と工夫で自分だけのスキルを作り、戦い、街の評判を上げていきます。', wait: 2400 },
-		{ text: 'まずは職業を選び、最初の武器とスキルを受け取りましょう。', wait: 2000 }
-	];
-	// 再生（非同期）
-	playOpeningSequence(pages).catch(console.error);
-} else {
-	// すでに選択済みなら opening は閉じておく
-	openingModal.classList.add('hidden');
+// --- 新規: キャラメイク / 名前入力用 DOM 参照と制御 ---
+const charModal = document.getElementById('charmake-modal');
+const chHeight = document.getElementById('ch-height');
+const chHeightVal = document.getElementById('ch-height-val');
+const chColorBtns = document.querySelectorAll('.ch-color-btn');
+const chPreview = document.getElementById('ch-preview');
+const chNext = document.getElementById('ch-next');
+
+const nameModal = document.getElementById('name-modal');
+const nameInput = document.getElementById('name-input');
+const nameNext = document.getElementById('name-next');
+
+// キャラメイク初期値
+let selectedColor = '#1565c0';
+let selectedHeight = parseFloat(chHeight.value) || 1.0;
+
+// プレビュー更新（DOM とプレイヤーに反映）
+function updateCharPreview(){
+	chHeightVal.textContent = selectedHeight.toFixed(2);
+	chPreview.style.background = selectedColor;
+	// プレイヤーメッシュに反映（高さは scale.y）
+	if(playerMesh){
+		playerMesh.material.color.set(selectedColor);
+		playerMesh.scale.y = selectedHeight;
+		// 足元を維持
+		playerMesh.position.y = 0.9 * selectedHeight;
+	}
+	// カラー選択 UI 更新
+	chColorBtns.forEach(btn => {
+		btn.classList.toggle('active', btn.dataset.color === selectedColor);
+	});
 }
+chColorBtns.forEach(btn=>{
+	btn.addEventListener('click', ()=>{ selectedColor = btn.dataset.color; updateCharPreview(); });
+});
+chHeight.addEventListener('input', ()=>{ selectedHeight = parseFloat(chHeight.value); updateCharPreview(); });
+
+// 次へ（キャラメイク完了 -> 名前入力へ）
+chNext.addEventListener('click', ()=>{
+	// 反映済みの状態でキャラメイクを閉じて名前入力へ
+	charModal.classList.add('hidden');
+	nameModal.classList.remove('hidden');
+	nameInput.focus();
+});
+
+// 名前決定 -> 職業選択表示
+nameNext.addEventListener('click', ()=>{
+	const n = (nameInput.value || '').trim();
+	if(n.length === 0){
+		alert('名前を入力してください');
+		nameInput.focus();
+		return;
+	}
+	player.name = n;
+	nameModal.classList.add('hidden');
+	jobModal.classList.remove('hidden');
+});
+
+// （その他既存コードはそのまま）
 
 // アニメーションループ
 let last = performance.now();
