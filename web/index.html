@@ -14,6 +14,25 @@
 			<button id="lock-btn">画面をクリックして操作開始</button>
 		</div>
 	</div>
+
+	<!-- チャット / コマンド入力（最初は非表示） -->
+	<div id="command-bar" class="hidden">
+		<input id="command-input" type="text" placeholder="/ コマンドを入力して Enter" />
+	</div>
+
+	<!-- 初回職業選択モーダル -->
+	<div id="job-modal" class="modal hidden" role="dialog" aria-modal="true">
+		<div class="modal-content">
+			<h2>職業を選択してください</h2>
+			<div class="job-list">
+				<button class="job-btn" data-job="sniper">スナイパー</button>
+				<button class="job-btn" data-job="warrior">戦士</button>
+				<button class="job-btn" data-job="mage">メイジ</button>
+			</div>
+			<button id="job-close" class="secondary">後で選ぶ</button>
+		</div>
+	</div>
+
 	<canvas id="c"></canvas>
 	<script type="module" src="./main.js"></script>
 </body>

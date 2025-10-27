@@ -6,4 +6,27 @@ canvas{display:block;width:100%;height:100%}
 .skill-btn{background:#333;border:1px solid #555;padding:6px;border-radius:4px;color:#fff;cursor:pointer}
 .skill-btn[disabled]{opacity:0.4;cursor:not-allowed}
 #lock-btn{margin-top:8px;padding:6px}
-.npc-label{position:absolute;padding:2px 6px;background:rgba(0,0,0,0.6);border-radius:4px;font-size:12px}
+
+/* コマンドバー */
+#command-bar{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;z-index:50;width:70%;max-width:900px}
+#command-bar input{width:100%;padding:10px 12px;border-radius:6px;border:1px solid #444;background:#111;color:#fff;font-size:14px}
+.hidden{display:none}
+
+/* モーダル */
+.modal{position:fixed;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:60}
+.modal-content{background:#1b1b1b;padding:20px;border-radius:8px;border:1px solid #333;width:320px;text-align:center}
+.job-list{display:flex;gap:8px;justify-content:center;margin-top:12px}
+.job-btn{padding:8px 12px;border-radius:6px;background:#2b2b2b;border:1px solid #444;color:#fff;cursor:pointer}
+.secondary{margin-top:12px;padding:6px 10px;background:#333;border:1px solid #444;color:#ddd;cursor:pointer}
+
+/* NPC ラベル */
+.npc-label{position:absolute;padding:2px 6px;background:rgba(0,0,0,0.6);border-radius:4px;font-size:12px;color:#fff;pointer-events:none}
+
+/* 吹き出し */
+.npc-speech{
+	position:absolute;z-index:70;pointer-events:none;
+	background:rgba(255,255,255,0.95);color:#111;padding:6px 8px;border-radius:8px;font-size:13px;
+	border:1px solid #ccc;white-space:nowrap;transform-origin:left top;
+	box-shadow:0 2px 6px rgba(0,0,0,0.4);
+}
+.npc-speech.hidden{display:none;}
