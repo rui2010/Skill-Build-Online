@@ -241,8 +241,8 @@ jobBtns.forEach(b=>{
 const openingModal = document.getElementById('opening-modal');
 const charModal = document.getElementById('charmake-modal');
 const nameModal = document.getElementById('name-modal');
-// 確実に初期は非表示にする（HTML 側の hidden に加えて JS で保障）
-openingModal.classList.add('hidden');
+// 変更: openingModal は初期表示させるためここでは隠さない
+// openingModal.classList.add('hidden');
 charModal.classList.add('hidden');
 nameModal.classList.add('hidden');
 
