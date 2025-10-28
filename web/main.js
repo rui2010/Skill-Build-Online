@@ -264,30 +264,56 @@ const SETUP_KEY = 'setupCompleted';
 const startBtn = document.getElementById('start-btn');
 const startScreen = document.getElementById('start-screen');
 
+async function startGame() {
+	// 二重起動防止
+	if (startGame._running) return;
+	startGame._running = true;
+
+	// ボタン無効化
+	if (startBtn) startBtn.disabled = true;
+
+	// 確実に start-screen を非表示にする
+	if (startScreen) {
+		startScreen.classList.add('hidden');
+		// remove after a tick to avoid interfering with pointer events
+		setTimeout(()=> { if (startScreen.parentNode) startScreen.parentNode.removeChild(startScreen); }, 200);
+	}
+	// remove button if it still exists
+	if (startBtn && startBtn.parentNode) {
+		try { startBtn.parentNode.removeChild(startBtn); } catch(e){ /* ignore */ }
+	}
+
+	// 開始処理：オープニングを再生
+	try {
+		await playOpeningSequence(openingPages);
+	} catch (e) {
+		console.error(e);
+		openingModal.classList.add('hidden');
+		charModal.classList.remove('hidden');
+		if (typeof updateCharPreview === 'function') updateCharPreview();
+	}
+}
+
+// startBtn があればクリックで開始
 if (startBtn) {
-	startBtn.addEventListener('click', async () => {
-		// 二重押し防止
-		startBtn.disabled = true;
-
-		// 確実に start-screen を非表示（CSS の .hidden を利用）
-		if (startScreen) startScreen.classList.add('hidden');
-		// さらに要素を削除して重なりを防ぐ（念のため）
-		if (startBtn && startBtn.parentNode) startBtn.parentNode.removeChild(startBtn);
-
-		try {
-			// openingPages は既に定義済み（ファイル内の配列を使用）
-			// 必ず opening を表示して再生
-			await playOpeningSequence(openingPages);
-		} catch (e) {
-			console.error(e);
-			// 失敗したらキャラメイクへ遷移
-			openingModal.classList.add('hidden');
-			charModal.classList.remove('hidden');
-			if (typeof updateCharPreview === 'function') updateCharPreview();
-		}
+	startBtn.addEventListener('click', (e)=>{
+		e.stopPropagation();
+		startGame();
 	});
 } else {
 	console.warn('startBtn not found in DOM');
+}
+
+// 画面クリックでも開始できるように startScreen にもハンドラをつける
+if (startScreen) {
+	startScreen.addEventListener('click', (e)=>{
+		// もしボタン自体がクリックされたなら startBtn の handler が走るのでここでは簡単に起動
+		startGame();
+	});
+	// Enter キーでも開始
+	window.addEventListener('keydown', (e)=>{
+		if (e.key === 'Enter' && !startGame._running) startGame();
+	});
 }
 
 // アニメーションループ
