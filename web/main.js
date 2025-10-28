@@ -269,9 +269,6 @@ async function startGame() {
 	if (startGame._running) return;
 	startGame._running = true;
 
-	// ボタン無効化
-	if (startBtn) startBtn.disabled = true;
-
 	// 確実に start-screen を非表示にする
 	if (startScreen) {
 		startScreen.classList.add('hidden');
