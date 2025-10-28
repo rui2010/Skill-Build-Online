@@ -24,12 +24,17 @@
 		<input id="command-input" type="text" placeholder="/ コマンドを入力して Enter" />
 	</div>
 
-	<!-- オープニング：自動文字送り/ページ演出用モーダル -->
-	<div id="opening-modal" class="modal" role="dialog" aria-modal="true" style="background:#000;">
+	<!-- オープニング：自動文字送り/ページ演出用モーダル（初期は非表示） -->
+	<div id="opening-modal" class="modal hidden" role="dialog" aria-modal="true" style="background:#000;">
 		<div class="modal-content cinematic">
 			<div id="opening-text" class="cinema-text"></div>
-			<!-- スキップボタンを削除しました -->
+			<!-- スキップボタンは削除済 -->
 		</div>
+	</div>
+
+	<!-- スタート画面（ページを開いたときに最初に見える黒画面と開始ボタン） -->
+	<div id="start-screen" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000;z-index:90">
+		<button id="start-btn" style="padding:14px 22px;font-size:18px;border-radius:8px;cursor:pointer">ゲームスタート</button>
 	</div>
 
 	<!-- キャラメイク（オープニングの次に表示） -->

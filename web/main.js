@@ -258,30 +258,28 @@ const openingPages = [
 // セットアップフラグ
 const SETUP_KEY = 'setupCompleted';
 
-// 起動時：未セットアップなら必ずオープニングを再生。
-// 既にセットアップ済でも openingModal が表示されている（HTML 側で表示している）なら再生する。
-(async () => {
+// --- 変更: 自動でオープニングを再生していた IIFE を削除し、Start ボタンで開始する ---
+// 既存の自動再生ブロックを削除しました。
+// 代わりに Start ボタンで開始（start-screen は index.html に追加済）
+const startBtn = document.getElementById('start-btn');
+const startScreen = document.getElementById('start-screen');
+
+startBtn.addEventListener('click', async () => {
+	// 二重押し防止
+	startBtn.disabled = true;
+	// スタート画面を消す
+	if (startScreen) startScreen.style.display = 'none';
 	try {
-		const shouldPlay = !localStorage.getItem(SETUP_KEY) || !openingModal.classList.contains('hidden');
-		if (shouldPlay) {
-			await playOpeningSequence(openingPages);
-		} else {
-			// 既にセットアップ済みかつ opening が隠れているなら通常スタート
-			openingModal.classList.add('hidden');
-			charModal.classList.add('hidden');
-			nameModal.classList.add('hidden');
-		}
+		// openingPages は既に定義済み（ファイル内の配列を使用）
+		await playOpeningSequence(openingPages);
 	} catch (e) {
 		console.error(e);
-		// 何か問題があってもキャラメイクに移行させる
+		// 失敗したらキャラメイクへ遷移
 		openingModal.classList.add('hidden');
 		charModal.classList.remove('hidden');
 		updateCharPreview();
 	}
-})();
-
-// --- 削除: openingNext 関連のイベントリスナ（スキップ用）は削除しました） ---
-// ...existing code...
+});
 
 // アニメーションループ
 let last = performance.now();
