@@ -237,126 +237,21 @@ jobBtns.forEach(b=>{
 	});
 });
 
-// --- オープニング用：タイプライター・ページ送りの実装 ---
+// --- 確実に初期モーダルを非表示にしておく（起動直後に勝手に表示されないように） ---
 const openingModal = document.getElementById('opening-modal');
-const openingTextEl = document.getElementById('opening-text');
-const openingNext = document.getElementById('opening-next');
-
-// 簡易 sleep
-function sleep(ms){ return new Promise(res => setTimeout(res, ms)); }
-
-// テキストをタイプライターで表示する。speed(ms/char)。
-// 途中で skipRequested を true にすると即座に完了する。
-let skipRequested = false;
-async function typeText(el, text, speed = 36){
-	el.textContent = '';
-	el.classList.remove('fade-in','fade-out');
-	el.classList.add('fade-in');
-	for(let i=0;i<text.length;i++){
-		if(skipRequested){ el.textContent = text; break; }
-		el.textContent += text[i];
-		await sleep(speed);
-	}
-	// 少し余韻
-	await sleep(300);
-}
-
-// オープニングの複数ページを自動で送り、終了後に職業選択を開く。
-// pages: array of {text, wait} wait は表示維持時間(ms)。
-async function playOpeningSequence(pages = []){
-	openingModal.classList.remove('hidden');
-	skipRequested = false;
-	for(let i=0;i<pages.length;i++){
-		openingTextEl.textContent = '';
-		await typeText(openingTextEl, pages[i].text, 28);
-		// wait: 自動進行までの時間。途中 skip されたら早送り。
-		const waitMs = pages[i].wait || 1800;
-		let elapsed = 0;
-		const step = 100;
-		while(elapsed < waitMs && !skipRequested){
-			await sleep(step);
-			elapsed += step;
-		}
-		if(skipRequested) break;
-	}
-	openingModal.classList.add('hidden');
-	// 次はキャラメイク → 名前 → 職業の順
-	charModal.classList.remove('hidden');
-	updateCharPreview();
-}
-
-// openingNext ボタンでスキップを通知（次へで即座に職業選択へ）
-openingNext.addEventListener('click', ()=>{
-	skipRequested = true;
-});
-
-// --- 新規: キャラメイク / 名前入力用 DOM 参照と制御 ---
 const charModal = document.getElementById('charmake-modal');
-const chHeight = document.getElementById('ch-height');
-const chHeightVal = document.getElementById('ch-height-val');
-const chColorBtns = document.querySelectorAll('.ch-color-btn');
-const chPreview = document.getElementById('ch-preview');
-const chNext = document.getElementById('ch-next');
-
 const nameModal = document.getElementById('name-modal');
-const nameInput = document.getElementById('name-input');
-const nameNext = document.getElementById('name-next');
 
-// キャラメイク初期値
-let selectedColor = '#1565c0';
-let selectedHeight = parseFloat(chHeight.value) || 1.0;
+// 追加: 他のモーダルも含めて確実に非表示に
+openingModal.classList.add('hidden');
+charModal.classList.add('hidden');
+nameModal.classList.add('hidden');
 
-// プレビュー更新（DOM とプレイヤーに反映）
-function updateCharPreview(){
-	chHeightVal.textContent = selectedHeight.toFixed(2);
-	chPreview.style.background = selectedColor;
-	// プレイヤーメッシュに反映（高さは scale.y）
-	if(playerMesh){
-		playerMesh.material.color.set(selectedColor);
-		playerMesh.scale.y = selectedHeight;
-		// 足元を維持
-		playerMesh.position.y = 0.9 * selectedHeight;
-	}
-	// カラー選択 UI 更新
-	chColorBtns.forEach(btn => {
-		btn.classList.toggle('active', btn.dataset.color === selectedColor);
-	});
-}
-chColorBtns.forEach(btn=>{
-	btn.addEventListener('click', ()=>{ selectedColor = btn.dataset.color; updateCharPreview(); });
-});
-chHeight.addEventListener('input', ()=>{ selectedHeight = parseFloat(chHeight.value); updateCharPreview(); });
+// --- セットアップ完了フラグ（以前の hasChosenJob と混同しない別キーを使う） ---
+const SETUP_KEY = 'setupCompleted';
 
-// 次へ（キャラメイク完了 -> 名前入力へ）
-chNext.addEventListener('click', ()=>{
-	// 反映済みの状態でキャラメイクを閉じて名前入力へ
-	charModal.classList.add('hidden');
-	nameModal.classList.remove('hidden');
-	nameInput.focus();
-});
-
-// 名前決定 -> 自動で職業を付与（職業選択画面を削除したため自動化）
-nameNext.addEventListener('click', ()=>{
-	const n = (nameInput.value || '').trim();
-	if(n.length === 0){
-		alert('名前を入力してください');
-		nameInput.focus();
-		return;
-	}
-	player.name = n;
-	nameModal.classList.add('hidden');
-
-	// デフォルト職業を自動適用
-	applyJob(DEFAULT_JOB);
-	// hasChosenJob を立てる（既存の applyJob でも設定しますが念のため）
-	localStorage.setItem('hasChosenJob','1');
-
-	// 簡易通知
-	alert(`職業「${DEFAULT_JOB}」が自動的に選択されました。後で /jobs コマンドで確認してください。`);
-});
-
-// 最初の起動時にオープニングを流す（localStorage チェック）
-if(!localStorage.getItem('hasChosenJob')){
+// 最初の起動時にオープニングを流す（未セットアップ時のみ）
+if (!localStorage.getItem(SETUP_KEY)) {
 	// 指定された物語テキストでページ配列を作成
 	const pages = [
 		{ text: "『……ス……』\n\n　何か声が聞こえる。耳元で何か囁かれている感じがする。", wait: 2200 },
@@ -369,9 +264,40 @@ if(!localStorage.getItem('hasChosenJob')){
 	// 再生（非同期）
 	playOpeningSequence(pages).catch(console.error);
 } else {
-	// すでに選択済みなら opening は閉じておく
+	// すでにセットアップ済みならすべての初期モーダルを非表示にしてゲーム開始
 	openingModal.classList.add('hidden');
+	charModal.classList.add('hidden');
+	nameModal.classList.add('hidden');
 }
+
+// --- playOpeningSequence の最後でキャラメイクを表示する流れはそのまま ---
+// playOpeningSequence の終端にある以下を維持してください（既存の実装箇所）:
+// openingModal.classList.add('hidden');
+// charModal.classList.remove('hidden');
+// updateCharPreview();
+
+// --- 名前決定 -> 自動で職業を付与（職業は自動適用済みの実装を利用） ---
+// nameNext のハンドラ内、職業を自動適用した後にセットアップ完了フラグを立てる
+nameNext.addEventListener('click', ()=>{
+	const n = (nameInput.value || '').trim();
+	if(n.length === 0){
+		alert('名前を入力してください');
+		nameInput.focus();
+		return;
+	}
+	player.name = n;
+	nameModal.classList.add('hidden');
+
+	// デフォルト職業を自動適用（既存の applyJob を呼ぶ）
+	const DEFAULT_JOB = 'hunter';
+	applyJob(DEFAULT_JOB);
+
+	// セットアップ完了フラグを立てる（以降オープニングはスキップ）
+	localStorage.setItem(SETUP_KEY, '1');
+
+	// 簡易通知
+	alert(`職業「${DEFAULT_JOB}」が自動的に選択されました。後で /jobs コマンドで確認してください。`);
+});
 
 // アニメーションループ
 let last = performance.now();
