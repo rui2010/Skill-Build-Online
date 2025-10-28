@@ -241,47 +241,47 @@ jobBtns.forEach(b=>{
 const openingModal = document.getElementById('opening-modal');
 const charModal = document.getElementById('charmake-modal');
 const nameModal = document.getElementById('name-modal');
-// 変更: openingModal は初期表示させるためここでは隠さない
-// openingModal.classList.add('hidden');
+// キャラメイク・名前は最初は隠す（opening は HTML 側で表示する）
 charModal.classList.add('hidden');
 nameModal.classList.add('hidden');
 
-// --- 追加: セットアップ完了フラグ用のキー（ファイル先頭近くに置いてください） ---
+// --- playOpeningSequence の呼び出しを確実化 ---
+// pages 配列（既存の文章に置き換え）
+const openingPages = [
+	{ text: "『……ス……』\n\n　何か声が聞こえる。耳元で何か囁かれている感じがする。", wait: 2200 },
+	{ text: "『……スター……』\n\n　徐々にはっきり聞こえてきた。何やら機械音声染みた声が聞こえる。", wait: 2200 },
+	{ text: "『主人マスター！』\n\n　完全に意識が覚醒する。先ほどから聞こえていた機械音声は、どうやら球体の形をした小さい浮遊ロボットだった。『シャドウ』？", wait: 3600 },
+	{ text: "『良かった、意識が戻ったのですね……。私の事はわかりますか？』\n\n「意識を失ったのか！？」\n\n　シャドウの言葉をガン無視で起き上がって慌てて時刻を確認する。", wait: 3600 },
+	{ text: "『ここは【始まりの平原】です。始まりの町【ファウスト】に最も近い平原と言われています……。今のあなたの姿では町人に認識されません。まずはあなたを蘇生しましょう』\n\n　と、ここでようやくキャラクタークリエイト画面が表示される。", wait: 3600 }
+];
+
+// セットアップフラグ
 const SETUP_KEY = 'setupCompleted';
 
-// --- playOpeningSequence の終端を確実にキャラメイク表示にする（既存関数の最後を置換） ---
-// 既存:
-// openingModal.classList.add('hidden');
-// charModal.classList.remove('hidden');
-// updateCharPreview();
-// 置換後（playOpeningSequence の最後に配置してください）:
-openingModal.classList.add('hidden');
-charModal.classList.remove('hidden');
-updateCharPreview();
+// 起動時：未セットアップなら必ずオープニングを再生。
+// 既にセットアップ済でも openingModal が表示されている（HTML 側で表示している）なら再生する。
+(async () => {
+	try {
+		const shouldPlay = !localStorage.getItem(SETUP_KEY) || !openingModal.classList.contains('hidden');
+		if (shouldPlay) {
+			await playOpeningSequence(openingPages);
+		} else {
+			// 既にセットアップ済みかつ opening が隠れているなら通常スタート
+			openingModal.classList.add('hidden');
+			charModal.classList.add('hidden');
+			nameModal.classList.add('hidden');
+		}
+	} catch (e) {
+		console.error(e);
+		// 何か問題があってもキャラメイクに移行させる
+		openingModal.classList.add('hidden');
+		charModal.classList.remove('hidden');
+		updateCharPreview();
+	}
+})();
 
-// --- nameNext のハンドラ：名前決定後に職業自動適用 → セットアップ完了フラグを設定 ---
-// 既存の nameNext ハンドラの末尾付近を以下のとおり置換してください。
-// 既存の最後の部分（職業適用や hide/show の箇所）を以下に置き換えます：
-
-/*
-	// 旧: player.name = n;
-	// nameModal.classList.add('hidden');
-	// applyJob(DEFAULT_JOB);
-	// localStorage.setItem('hasChosenJob','1');
-	// alert(...)
-*/
-	// 新:
-	player.name = n;
-	nameModal.classList.add('hidden');
-
-	// デフォルト職業を自動適用（必要なら DEFAULT_JOB を前方で定義）
-	const DEFAULT_JOB = 'hunter';
-	applyJob(DEFAULT_JOB);
-
-	// 統一キーでセットアップ完了を記録（以降オープニングはスキップ）
-	localStorage.setItem(SETUP_KEY, '1');
-
-	alert(`職業「${DEFAULT_JOB}」が自動的に選択されました。後で /jobs コマンドで確認してください。`);
+// --- 削除: openingNext 関連のイベントリスナ（スキップ用）は削除しました） ---
+// ...existing code...
 
 // アニメーションループ
 let last = performance.now();
