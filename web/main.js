@@ -223,6 +223,9 @@ function applyJob(jobKey){
 
 // 初回職業選択モーダル制御
 const jobModal = document.getElementById('job-modal');
+// 追加: 起動時に誤表示されないよう確実に非表示にする
+jobModal.classList.add('hidden');
+
 const jobBtns = document.querySelectorAll('.job-btn');
 
 // 次へを押すとオープニングを閉じて職業選択を表示
