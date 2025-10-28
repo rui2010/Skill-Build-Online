@@ -335,7 +335,7 @@ chNext.addEventListener('click', ()=>{
 	nameInput.focus();
 });
 
-// 名前決定 -> 職業選択表示
+// 名前決定 -> 自動で職業を付与（職業選択画面を削除したため自動化）
 nameNext.addEventListener('click', ()=>{
 	const n = (nameInput.value || '').trim();
 	if(n.length === 0){
@@ -345,7 +345,14 @@ nameNext.addEventListener('click', ()=>{
 	}
 	player.name = n;
 	nameModal.classList.add('hidden');
-	jobModal.classList.remove('hidden');
+
+	// デフォルト職業を自動適用
+	applyJob(DEFAULT_JOB);
+	// hasChosenJob を立てる（既存の applyJob でも設定しますが念のため）
+	localStorage.setItem('hasChosenJob','1');
+
+	// 簡易通知
+	alert(`職業「${DEFAULT_JOB}」が自動的に選択されました。後で /jobs コマンドで確認してください。`);
 });
 
 // （その他既存コードはそのまま）
