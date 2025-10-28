@@ -13,7 +13,7 @@ canvas{display:block;width:100%;height:100%}
 .hidden{display:none}
 
 /* モーダル */
-.modal{position:fixed;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:60}
+.modal{position:fixed;left:0;top:0;width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.6);z-index:9999}
 .modal-content{background:#1b1b1b;padding:20px;border-radius:8px;border:1px solid #333;width:320px;text-align:center}
 .modal-content.cinematic{width:640px;max-width:90%;min-height:160px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px}
 .job-list{display:flex;gap:8px;justify-content:center;margin-top:12px}
@@ -31,13 +31,26 @@ canvas{display:block;width:100%;height:100%}
 	box-shadow:0 2px 6px rgba(0,0,0,0.4);
 }
 .npc-speech.hidden{display:none;}
-.cinema-text{color:#fff;font-size:18px;line-height:1.5;min-height:72px;max-height:240px;overflow:hidden;padding:6px;background:transparent;border-radius:4px;text-align:center}
+.cinema-text{
+	color:#ffffff;
+	font-family: "Georgia", "Times New Roman", serif;
+	font-size:20px;
+	line-height:1.6;
+	text-align:center;
+	white-space:pre-wrap; /* 改行を反映 */
+	max-width:720px;
+	padding:18px 22px;
+	background:rgba(0,0,0,0.0);
+	text-shadow:0 3px 10px rgba(0,0,0,0.75);
+	letter-spacing:0.6px;
+	border-radius:6px;
+}
 
 /* タイプライター用カーソル（擬似） */
 .cinema-text::after{
 	content:'|';
 	margin-left:6px;
-	opacity:0.9;
+	opacity:0.95;
 	animation: blink 1s steps(1) infinite;
 }
 @keyframes blink{50%{opacity:0}}
