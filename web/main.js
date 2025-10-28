@@ -264,6 +264,50 @@ const SETUP_KEY = 'setupCompleted';
 const startBtn = document.getElementById('start-btn');
 const startScreen = document.getElementById('start-screen');
 
+// 追加：opening のテキスト表示要素参照
+const openingTextEl = document.getElementById('opening-text'); // これを追加
+
+// 追加：簡易 sleep / タイプライター / オープニング再生
+function sleep(ms){ return new Promise(res => setTimeout(res, ms)); }
+let skipRequested = false;
+async function typeText(el, text, speed = 28){
+	el.textContent = '';
+	el.classList.remove('fade-in','fade-out');
+	el.classList.add('fade-in');
+	for(let i=0;i<text.length;i++){
+		if(skipRequested){ el.textContent = text; break; }
+		el.textContent += text[i];
+		await sleep(speed);
+	}
+	await sleep(300);
+}
+async function playOpeningSequence(pages = []){
+	try {
+		skipRequested = false;
+		openingModal.classList.remove('hidden');
+		for(const p of pages){
+			await typeText(openingTextEl, p.text || '', 28);
+			const waitMs = p.wait || 1600;
+			let elapsed = 0;
+			const step = 100;
+			while(elapsed < waitMs && !skipRequested){
+				await sleep(step);
+				elapsed += step;
+			}
+			if(skipRequested) break;
+		}
+	} catch(e){
+		console.error('playOpeningSequence error', e);
+	} finally {
+		// 終了処理：opening を隠してキャラメイクを表示
+		openingModal.classList.add('hidden');
+		if (typeof updateCharPreview === 'function' && charModal) {
+			charModal.classList.remove('hidden');
+			updateCharPreview();
+		}
+	}
+}
+
 startBtn.addEventListener('click', async () => {
 	// 二重押し防止
 	startBtn.disabled = true;
@@ -271,6 +315,7 @@ startBtn.addEventListener('click', async () => {
 	if (startScreen) startScreen.style.display = 'none';
 	try {
 		// openingPages は既に定義済み（ファイル内の配列を使用）
+		// 必ず opening を表示して再生
 		await playOpeningSequence(openingPages);
 	} catch (e) {
 		console.error(e);
