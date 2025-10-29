@@ -269,44 +269,40 @@ async function startGame() {
 	if (startGame._running) return;
 	startGame._running = true;
 
-	// 確実に start-screen を非表示にする
-	if (startScreen) {
-		startScreen.classList.add('hidden');
-		// remove after a tick to avoid interfering with pointer events
-		setTimeout(()=> { if (startScreen.parentNode) startScreen.parentNode.removeChild(startScreen); }, 200);
-	}
-	// remove button if it still exists
-	if (startBtn && startBtn.parentNode) {
-		try { startBtn.parentNode.removeChild(startBtn); } catch(e){ /* ignore */ }
+	// 無効化・非表示
+	if (startBtn) {
+		startBtn.disabled = true;
+		// 背景の start-screen を確実に非表示にする
+		if (startScreen) {
+			startScreen.classList.add('hidden');
+			// さらに DOM から削除（重なりや pointer-events 問題予防）
+			setTimeout(()=>{ if (startScreen.parentNode) startScreen.parentNode.removeChild(startScreen); }, 200);
+		}
+		// ボタン自体も消す
+		try { startBtn.style.display = 'none'; } catch(e) {}
 	}
 
-	// 開始処理：オープニングを再生
+	// opening を表示して再生
 	try {
+		if (openingModal) openingModal.classList.remove('hidden');
 		await playOpeningSequence(openingPages);
 	} catch (e) {
 		console.error(e);
-		openingModal.classList.add('hidden');
-		charModal.classList.remove('hidden');
+		// フォールバックでキャラメイクへ
+		if (openingModal) openingModal.classList.add('hidden');
+		if (charModal) charModal.classList.remove('hidden');
 		if (typeof updateCharPreview === 'function') updateCharPreview();
 	}
 }
 
-// startBtn があればクリックで開始
+// startBtn と startScreen のイベント設定
 if (startBtn) {
-	startBtn.addEventListener('click', (e)=>{
-		e.stopPropagation();
-		startGame();
-	});
+	startBtn.addEventListener('click', (e) => { e.stopPropagation(); startGame(); });
 } else {
 	console.warn('startBtn not found in DOM');
 }
-
-// 画面クリックでも開始できるように startScreen にもハンドラをつける
 if (startScreen) {
-	startScreen.addEventListener('click', (e)=>{
-		// もしボタン自体がクリックされたなら startBtn の handler が走るのでここでは簡単に起動
-		startGame();
-	});
+	startScreen.addEventListener('click', ()=> startGame());
 	// Enter キーでも開始
 	window.addEventListener('keydown', (e)=>{
 		if (e.key === 'Enter' && !startGame._running) startGame();

@@ -34,15 +34,17 @@ canvas{display:block;width:100%;height:100%}
 .cinema-text{
 	color:#ffffff;
 	font-family: "Georgia", "Times New Roman", serif;
-	font-size:20px;
+	font-size:22px;
 	line-height:1.6;
 	text-align:center;
 	white-space:pre-wrap; /* 改行を反映 */
-	max-width:720px;
+	max-width:760px;
 	padding:18px 22px;
-	background:rgba(0,0,0,0.0);
-	text-shadow:0 3px 10px rgba(0,0,0,0.75);
-	letter-spacing:0.6px;
+	background:transparent;
+	text-shadow:
+		0 6px 18px rgba(0,0,0,0.65),
+		0 1px 0 rgba(255,255,255,0.02);
+	letter-spacing:0.4px;
 	border-radius:6px;
 }
 
@@ -72,3 +74,13 @@ canvas{display:block;width:100%;height:100%}
 input[type="range"]{width:100%}
 .ch-color-btn{cursor:pointer;border:2px solid transparent}
 .ch-color-btn.active{outline:2px solid #fff;transform:translateY(-2px)}
+
+/* 全体で使う非表示クラス（start-screen 等に適用） */
+.hidden {
+	display: none !important;
+}
+
+/* モーダルを確実に最前面に出す（start-screen より上） */
+.modal {
+	z-index: 9999;
+}
