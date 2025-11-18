@@ -307,46 +307,46 @@ const openingPages = [
 // セットアップフラグ
 const SETUP_KEY = 'setupCompleted';
 
-// --- 変更: 自動でオープニングを再生していた IIFE を削除し、Start ボタンで開始する ---
-// 既存の自動再生ブロックを削除しました。
-// 代わりに Start ボタンで開始（start-screen は index.html に追加済）
+// --- start ボタン周りを確実化する処理（このブロックで既存の startBtn/startScreen 部分を置換） ---
 const startBtn = document.getElementById('start-btn');
 const startScreen = document.getElementById('start-screen');
 
-// 追加: start UI を確実に隠して DOM から取り除くヘルパー
+// 確実に start UI を隠して削除するヘルパー
 function hideStartUI(){
-	// ボタンを無効化して非表示・削除
+	// 無効化・非表示
 	if (startBtn) {
-		try { startBtn.disabled = true; startBtn.style.display = 'none'; } catch(e) {}
-		if (startBtn.parentNode) {
-			try { startBtn.parentNode.removeChild(startBtn); } catch(e) {}
+		try { startBtn.disabled = true; startBtn.style.display = 'none'; } catch(e){}
+		// 親から取り除くと確実に重なりを防げる
+		if (startBtn && startBtn.parentNode) {
+			try { startBtn.parentNode.removeChild(startBtn); } catch(e){}
 		}
 	}
-	// スタート画面を非表示・削除（ポインターイベントの競合回避で少し遅延して削除）
+	// start-screen を非表示にして少ししてから削除
 	if (startScreen) {
-		try { startScreen.classList.add('hidden'); } catch(e) {}
+		try { startScreen.classList.add('hidden'); } catch(e){}
 		setTimeout(()=>{
 			if (startScreen.parentNode) {
-				try { startScreen.parentNode.removeChild(startScreen); } catch(e) {}
+				try { startScreen.parentNode.removeChild(startScreen); } catch(e){}
 			}
 		}, 120);
 	}
 }
 
-// 安定化された startGame 関数（重複起動防止、UI 隠蔽、オープニング再生）
-async function startGame() {
+// 重複起動防止つきの開始処理
+async function startGame(){
 	if (startGame._running) return;
 	startGame._running = true;
 
-	// UI を隠す
+	// UI を消す
 	hideStartUI();
 
-	// 開始処理：オープニングを再生
+	// opening を前面にして再生
 	try {
 		if (openingModal) openingModal.classList.remove('hidden');
+		// openingPages と playOpeningSequence は既にファイル内で定義済み
 		await playOpeningSequence(openingPages);
-	} catch (e) {
-		console.error(e);
+	} catch (err) {
+		console.error('startGame error', err);
 		// フォールバックでキャラメイクへ
 		if (openingModal) openingModal.classList.add('hidden');
 		if (charModal) charModal.classList.remove('hidden');
@@ -354,16 +354,22 @@ async function startGame() {
 	}
 }
 
-// start ボタン・画面クリックで開始（存在チェックあり）
-if (startBtn) {
-	startBtn.addEventListener('click', (e) => { e.stopPropagation(); startGame(); });
-} else {
-	console.warn('startBtn not found in DOM');
+// DOM が用意された後にリスナを登録（モジュールの実行タイミングによらず確実）
+function attachStartHandlers(){
+	// クリックで開始
+	if (startBtn) startBtn.addEventListener('click', (e) => { e.stopPropagation(); startGame(); });
+	if (startScreen) startScreen.addEventListener('click', () => startGame());
+	// Enter キーでも開始
+	window.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !startGame._running) startGame(); });
+	// 保険: コンソールに見やすいログ
+	console.log('Start handlers attached');
 }
-if (startScreen) {
-	startScreen.addEventListener('click', ()=> startGame());
-	// Enter キーで開始
-	window.addEventListener('keydown', (e)=> { if (e.key === 'Enter' && !startGame._running) startGame(); });
+
+// DOMContentLoaded で確実に登録（既に DOM が ready なら即実行）
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', attachStartHandlers);
+} else {
+	attachStartHandlers();
 }
 
 // アニメーションループ
