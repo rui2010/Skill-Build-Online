@@ -245,6 +245,55 @@ const nameModal = document.getElementById('name-modal');
 charModal.classList.add('hidden');
 nameModal.classList.add('hidden');
 
+// 追加: opening テキスト要素参照とタイプライター関数群
+const openingTextEl = document.getElementById('opening-text');
+
+function sleep(ms){ return new Promise(res => setTimeout(res, ms)); }
+let skipRequested = false;
+
+async function typeText(el, text, speed = 28){
+	if(!el) return;
+	el.textContent = '';
+	el.classList.remove('fade-in','fade-out');
+	el.classList.add('fade-in');
+	for(let i=0;i<text.length;i++){
+		if(skipRequested){ el.textContent = text; break; }
+		el.textContent += text[i];
+		await sleep(speed);
+	}
+	// 少し余韻
+	await sleep(300);
+}
+
+async function playOpeningSequence(pages = []){
+	try {
+		skipRequested = false;
+		if (openingModal) openingModal.classList.remove('hidden');
+		// テキスト色を白に固定（ゼルダ風）
+		if (openingTextEl) openingTextEl.style.color = '#ffffff';
+		for(const p of pages){
+			await typeText(openingTextEl, p.text || '', 28);
+			const waitMs = p.wait || 1600;
+			let elapsed = 0;
+			const step = 100;
+			while(elapsed < waitMs && !skipRequested){
+				await sleep(step);
+				elapsed += step;
+			}
+			if(skipRequested) break;
+		}
+	} catch(e){
+		console.error('playOpeningSequence error', e);
+	} finally {
+		// 終了処理：opening を隠してキャラメイクを表示
+		if (openingModal) openingModal.classList.add('hidden');
+		if (charModal) {
+			charModal.classList.remove('hidden');
+			if (typeof updateCharPreview === 'function') updateCharPreview();
+		}
+	}
+}
+
 // --- playOpeningSequence の呼び出しを確実化 ---
 // pages 配列（既存の文章に置き換え）
 const openingPages = [
