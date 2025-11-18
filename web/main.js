@@ -313,88 +313,57 @@ const SETUP_KEY = 'setupCompleted';
 const startBtn = document.getElementById('start-btn');
 const startScreen = document.getElementById('start-screen');
 
-// 追加：opening のテキスト要素参照（既にあれば重複しないよう統合）
-const openingTextEl = document.getElementById('opening-text');
-
-// 追加：簡易 sleep / タイプライター / オープニング再生（存在しない場合に備えて定義）
-function sleep(ms){ return new Promise(res => setTimeout(res, ms)); }
-let skipRequested = false;
-async function typeText(el, text, speed = 28){
-	if(!el) return;
-	el.textContent = '';
-	el.classList.remove('fade-in','fade-out');
-	el.classList.add('fade-in');
-	for(let i=0;i<text.length;i++){
-		if(skipRequested){ el.textContent = text; break; }
-		el.textContent += text[i];
-		await sleep(speed);
+// 追加: start UI を確実に隠して DOM から取り除くヘルパー
+function hideStartUI(){
+	// ボタンを無効化して非表示・削除
+	if (startBtn) {
+		try { startBtn.disabled = true; startBtn.style.display = 'none'; } catch(e) {}
+		if (startBtn.parentNode) {
+			try { startBtn.parentNode.removeChild(startBtn); } catch(e) {}
+		}
 	}
-	await sleep(300);
-}
-async function playOpeningSequence(pages = []){
-	try {
-		skipRequested = false;
-		if (openingModal) openingModal.classList.remove('hidden');
-		// 強制的に文字色を白に（ゼルダ風見た目確保）
-		if (openingTextEl) openingTextEl.style.color = '#ffffff';
-		for(const p of pages){
-			await typeText(openingTextEl, p.text || '', 28);
-			const waitMs = p.wait || 1600;
-			let elapsed = 0;
-			const step = 100;
-			while(elapsed < waitMs && !skipRequested){
-				await sleep(step);
-				elapsed += step;
+	// スタート画面を非表示・削除（ポインターイベントの競合回避で少し遅延して削除）
+	if (startScreen) {
+		try { startScreen.classList.add('hidden'); } catch(e) {}
+		setTimeout(()=>{
+			if (startScreen.parentNode) {
+				try { startScreen.parentNode.removeChild(startScreen); } catch(e) {}
 			}
-			if(skipRequested) break;
-		}
-	} catch(e){
-		console.error('playOpeningSequence error', e);
-	} finally {
-		// 終了処理：opening を隠してキャラメイクを表示
-		if (openingModal) openingModal.classList.add('hidden');
-		if (charModal) {
-			charModal.classList.remove('hidden');
-			if (typeof updateCharPreview === 'function') updateCharPreview();
-		}
+		}, 120);
 	}
 }
 
+// 安定化された startGame 関数（重複起動防止、UI 隠蔽、オープニング再生）
 async function startGame() {
-	// 二重起動防止
 	if (startGame._running) return;
 	startGame._running = true;
 
-	// ボタン無効化/非表示
-	if (startBtn) {
-		startBtn.disabled = true;
-		startBtn.style.display = 'none';
-	}
-	// start-screen を確実に非表示に
-	if (startScreen) {
-		startScreen.classList.add('hidden');
-		// 少し待って DOM から削除（pointer-event 問題回避）
-		setTimeout(()=> { if (startScreen.parentNode) startScreen.parentNode.removeChild(startScreen); }, 250);
-	}
+	// UI を隠す
+	hideStartUI();
 
-	// opening を表示して再生
+	// 開始処理：オープニングを再生
 	try {
 		if (openingModal) openingModal.classList.remove('hidden');
 		await playOpeningSequence(openingPages);
 	} catch (e) {
 		console.error(e);
+		// フォールバックでキャラメイクへ
 		if (openingModal) openingModal.classList.add('hidden');
 		if (charModal) charModal.classList.remove('hidden');
 		if (typeof updateCharPreview === 'function') updateCharPreview();
 	}
 }
 
+// start ボタン・画面クリックで開始（存在チェックあり）
 if (startBtn) {
-	startBtn.addEventListener('click', (e)=>{ e.stopPropagation(); startGame(); });
+	startBtn.addEventListener('click', (e) => { e.stopPropagation(); startGame(); });
+} else {
+	console.warn('startBtn not found in DOM');
 }
 if (startScreen) {
 	startScreen.addEventListener('click', ()=> startGame());
-	window.addEventListener('keydown', (e)=>{ if (e.key === 'Enter' && !startGame._running) startGame(); });
+	// Enter キーで開始
+	window.addEventListener('keydown', (e)=> { if (e.key === 'Enter' && !startGame._running) startGame(); });
 }
 
 // アニメーションループ
